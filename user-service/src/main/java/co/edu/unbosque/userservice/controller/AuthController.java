@@ -5,36 +5,120 @@ import co.edu.unbosque.userservice.dto.LoginResponseDTO;
 import co.edu.unbosque.userservice.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "Autenticación", description = "Gestión de inicio de sesión y generación de tokens JWT para los usuarios de EcoRide")
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Controlador REST para autenticacion de usuarios
+ * Maneja login y generacion de tokens JWT
+ */
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/auth")
+@Tag(name = "Authentication", description = "Endpoints para autenticacion y generacion de tokens JWT")
 public class AuthController {
 
-    @Autowired
-    private AuthService authService;
+    private final AuthService authService;
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
 
     @Operation(
-            summary = "Iniciar sesión",
-            description = "Permite que un usuario inicie sesión en EcoRide usando su correo y contraseña. Retorna un token JWT válido para acceder a los demás servicios.",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Inicio de sesión exitoso. Devuelve el token JWT.",
-                            content = @Content(mediaType = "application/json",
-                                    schema = @Schema(implementation = LoginResponseDTO.class))),
-                    @ApiResponse(responseCode = "400", description = "Credenciales inválidas o datos mal enviados.",
-                            content = @Content(mediaType = "application/json")),
-                    @ApiResponse(responseCode = "401", description = "Usuario no autorizado."),
-                    @ApiResponse(responseCode = "500", description = "Error interno en el servidor.")
-            }
+            summary = "Iniciar sesion",
+            description = "Autentica un usuario usando email y password. " +
+                    "Retorna un token JWT valido para acceder a los servicios protegidos. " +
+                    "El token debe incluirse en el header Authorization: Bearer {token}"
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Login exitoso. Retorna token JWT e informacion del usuario",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = LoginResponseDTO.class),
+                            examples = @ExampleObject(value = """
+                                {
+                                  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                                  "message": "Login exitoso",
+                                  "userId": 1,
+                                  "email": "sebastian@example.com",
+                                  "fullName": "Sebastian Carroz"
+                                }
+                                """)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Credenciales invalidas o datos mal formados",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                {
+                                  "error": "Error de autenticacion",
+                                  "message": "Credenciales invalidas"
+                                }
+                                """)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Usuario no encontrado",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                {
+                                  "error": "Usuario no encontrado",
+                                  "message": "Usuario no encontrado con email: usuario@example.com"
+                                }
+                                """)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Cuenta inactiva o bloqueada"
+            )
+    })
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<?> login(
+            @Valid @RequestBody
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Credenciales de login",
+                    required = true,
+                    content = @Content(
+                            schema = @Schema(implementation = LoginRequestDTO.class),
+                            examples = @ExampleObject(value = """
+                                {
+                                  "email": "sebastian@example.com",
+                                  "password": "SecurePass123"
+                                }
+                                """)
+                    )
+            )
+            LoginRequestDTO request
+    ) {
+        try {
+            LoginResponseDTO response = authService.login(request);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "Error de autenticacion");
+            error.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "Usuario no encontrado");
+            error.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        }
     }
 }

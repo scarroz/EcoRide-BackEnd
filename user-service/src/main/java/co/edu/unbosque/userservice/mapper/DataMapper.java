@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 
 /**
  * Mapper para convertir entre DTOs y Entidades
- * Centraliza toda la logica de mapeo
+ * Centraliza toda la logica de mapeo del User Service
  */
 @Component
 public class DataMapper {
@@ -93,7 +93,7 @@ public class DataMapper {
         if (dto.email() != null && !dto.email().isBlank()) {
             entity.setEmail(dto.email());
         }
-        if (dto.password() != null && !dto.password().isBlank()) {
+        if (dto.password() != null && !dto.password().isBlank() && encodedPassword != null) {
             entity.setPasswordHash(encodedPassword);
         }
     }
@@ -210,9 +210,9 @@ public class DataMapper {
     // ========================================
 
     /**
-     * Crea DTO de respuesta de login
+     * Crea DTO de respuesta de login con informacion completa
      */
-   /* public LoginResponseDTO toLoginResponseDTO(String token, UserAccount user) {
+    public LoginResponseDTO toLoginResponseDTO(String token, UserAccount user) {
         if (user == null) return null;
 
         return new LoginResponseDTO(
@@ -222,7 +222,7 @@ public class DataMapper {
                 user.getEmail(),
                 user.getFullName()
         );
-    }*/
+    }
 
     // ========================================
     // NOTIFICATION MAPPINGS
