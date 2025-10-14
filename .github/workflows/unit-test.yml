@@ -1,0 +1,58 @@
+name: Run Unit Tests (User-Service + Payment-Service)
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  user-service-tests:
+    name:  User-Service Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name:  Checkout repository
+        uses: actions/checkout@v4
+
+      - name:  Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name:  Run unit tests for user-service
+        run: mvn -f user-service/pom.xml clean test -B -Dtest=*ServiceImplTest
+
+      - name:  Upload Test Reports (User-Service)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: user-service-test-report
+          path: user-service/target/surefire-reports/
+
+  payment-service-tests:
+    name:  Payment-Service Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name:  Checkout repository
+        uses: actions/checkout@v4
+
+      - name:  Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name:  Run unit tests for payment-service
+        run: mvn -f payment-service/pom.xml clean test -B -Dtest=*ServiceImplTest
+
+      - name: 📤 Upload Test Reports (Payment-Service)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: payment-service-test-report
+          path: payment-service/target/surefire-reports/
