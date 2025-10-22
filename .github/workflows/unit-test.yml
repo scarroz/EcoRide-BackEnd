@@ -50,7 +50,7 @@ jobs:
       - name:  Run unit tests for payment-service
         run: mvn -f payment-service/pom.xml clean test -B -Dtest=*ServiceImplTest
 
-      - name: 📤 Upload Test Reports (Payment-Service)
+      - name: Upload Test Reports (Payment-Service)
         if: always()
         uses: actions/upload-artifact@v4
         with:
