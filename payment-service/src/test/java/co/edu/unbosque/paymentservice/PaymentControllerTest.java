@@ -78,7 +78,7 @@ class PaymentControllerTest {
 
     @Test
     @DisplayName("POST /api/payments/cards/register - Should register card successfully")
-    void testRegisterCard_Success() throws Exception {
+    void testRegisterCardSuccess() throws Exception {
         // Arrange
         when(paymentService.registerCard(any())).thenReturn(paymentMethodResponse);
 
@@ -96,7 +96,7 @@ class PaymentControllerTest {
 
     @Test
     @DisplayName("POST /api/payments/cards/register - Should handle registration error")
-    void testRegisterCard_Error() throws Exception {
+    void testRegisterCardError() throws Exception {
         // Arrange
         when(paymentService.registerCard(any()))
                 .thenThrow(new RuntimeException("Error con Stripe"));
@@ -113,7 +113,7 @@ class PaymentControllerTest {
 
     @Test
     @DisplayName("POST /api/payments/wallet/recharge - Should recharge wallet successfully")
-    void testRechargeWallet_Success() throws Exception {
+    void testRechargeWalletSuccess() throws Exception {
         // Arrange
         when(paymentService.rechargeWallet(any())).thenReturn(transactionResponse);
 
@@ -131,7 +131,7 @@ class PaymentControllerTest {
 
     @Test
     @DisplayName("POST /api/payments/wallet/recharge - Should handle payment error")
-    void testRechargeWallet_PaymentError() throws Exception {
+    void testRechargeWalletPaymentError() throws Exception {
         // Arrange
         when(paymentService.rechargeWallet(any()))
                 .thenThrow(new RuntimeException("Tarjeta rechazada"));
@@ -148,7 +148,7 @@ class PaymentControllerTest {
 
     @Test
     @DisplayName("GET /api/payments/methods/{userId} - Should get payment methods")
-    void testGetUserPaymentMethods_Success() throws Exception {
+    void testGetUserPaymentMethodsSuccess() throws Exception {
         // Arrange
         List<PaymentMethodResponseDTO> methods = Arrays.asList(paymentMethodResponse);
         when(paymentService.getActiveMethodsByUser(anyLong())).thenReturn(methods);
@@ -165,7 +165,7 @@ class PaymentControllerTest {
 
     @Test
     @DisplayName("GET /api/payments/methods/{userId} - Should handle no methods found")
-    void testGetUserPaymentMethods_Empty() throws Exception {
+    void testGetUserPaymentMethodsEmpty() throws Exception {
         // Arrange
         when(paymentService.getActiveMethodsByUser(anyLong())).thenReturn(List.of());
 
@@ -180,7 +180,7 @@ class PaymentControllerTest {
 
     @Test
     @DisplayName("POST /api/payments/wallet/recharge - Should validate request body")
-    void testRechargeWallet_InvalidRequest() throws Exception {
+    void testRechargeWalletInvalidRequest() throws Exception {
         // Arrange
         String invalidJson = "{\"userId\": 1}"; // Missing required fields
 
@@ -193,7 +193,7 @@ class PaymentControllerTest {
 
     @Test
     @DisplayName("POST /api/payments/cards/register - Should validate empty email")
-    void testRegisterCard_EmptyEmail() throws Exception {
+    void testRegisterCardEmptyEmail() throws Exception {
         // Arrange
         PaymentCardRequestDTO invalidRequest = new PaymentCardRequestDTO(
                 1L,

@@ -29,7 +29,7 @@ public class UserClient {
                 .retrieve()
                 .bodyToMono(Void.class)
                 .onErrorResume(error -> {
-                    System.err.println("⚠️ Error notificando al UserService: " + error.getMessage());
+                    System.err.println("Error notificando al UserService: " + error.getMessage());
                     return Mono.empty();
                 })
                 .block();

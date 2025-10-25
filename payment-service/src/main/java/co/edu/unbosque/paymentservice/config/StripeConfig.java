@@ -16,7 +16,7 @@ public class StripeConfig {
     @PostConstruct
     public void init() {
         Stripe.apiKey = stripeSecretKey;
-        System.out.println("✅ Stripe inicializado correctamente.");
+        System.out.println("Stripe inicializado correctamente.");
     }
 }
 

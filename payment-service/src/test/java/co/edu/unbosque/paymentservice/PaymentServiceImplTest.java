@@ -115,7 +115,7 @@ class PaymentServiceImplTest {
 
     @Test
     @DisplayName("Should return empty list when user has no payment methods")
-    void testGetActiveMethodsByUser_NoMethods() {
+    void testGetActiveMethodsByUserNoMethods() {
         // Arrange
         Long userId = 999L;
         when(paymentMethodRepository.findByUserIdAndActiveTrue(userId)).thenReturn(List.of());
@@ -192,7 +192,7 @@ class PaymentServiceImplTest {
 
     @Test
     @DisplayName("Should throw exception when transaction not found")
-    void testGetTransactionDetail_NotFound() {
+    void testGetTransactionDetailNotFound() {
         // Arrange
         Long transactionId = 999L;
         when(transactionRepository.findById(transactionId)).thenReturn(Optional.empty());
@@ -234,7 +234,7 @@ class PaymentServiceImplTest {
 
     @Test
     @DisplayName("Should validate payment method belongs to user")
-    void testRechargeWallet_PaymentMethodNotBelongsToUser() {
+    void testRechargeWalletPaymentMethodNotBelongsToUser() {
         // Arrange
         paymentMethod.setUserId(2L); // Different user
         when(paymentMethodRepository.findByTokenId(anyString()))
@@ -249,7 +249,7 @@ class PaymentServiceImplTest {
 
     @Test
     @DisplayName("Should throw exception when payment method is inactive")
-    void testRechargeWallet_InactivePaymentMethod() {
+    void testRechargeWalletInactivePaymentMethod() {
         // Arrange
         paymentMethod.setActive(false);
         when(paymentMethodRepository.findByTokenId(anyString()))
@@ -264,7 +264,7 @@ class PaymentServiceImplTest {
 
     @Test
     @DisplayName("Should throw exception when payment method not found")
-    void testRechargeWallet_PaymentMethodNotFound() {
+    void testRechargeWalletPaymentMethodNotFound() {
         // Arrange
         when(paymentMethodRepository.findByTokenId(anyString()))
                 .thenReturn(Optional.empty());
@@ -278,7 +278,7 @@ class PaymentServiceImplTest {
 
     @Test
     @DisplayName("Should handle null or empty payment method ID")
-    void testRechargeWallet_NullPaymentMethodId() {
+    void testRechargeWalletNullPaymentMethodId() {
         // Arrange
         WalletRechargeRequestDTO invalidRequest = new WalletRechargeRequestDTO(
                 1L,
@@ -294,7 +294,7 @@ class PaymentServiceImplTest {
 
     @Test
     @DisplayName("Should handle blank payment method ID")
-    void testRechargeWallet_BlankPaymentMethodId() {
+    void testRechargeWalletBlankPaymentMethodId() {
         // Arrange
         WalletRechargeRequestDTO invalidRequest = new WalletRechargeRequestDTO(
                 1L,

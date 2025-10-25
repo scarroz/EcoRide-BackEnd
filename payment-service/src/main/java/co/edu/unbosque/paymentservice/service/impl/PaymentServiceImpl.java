@@ -108,22 +108,18 @@ public class PaymentServiceImpl implements PaymentService {
             System.out.println("   Usuario: " + request.userId());
             System.out.println("   Monto: $" + request.amount());
 
-            // Validar paymentMethodId
             if (request.paymentMethodId() == null || request.paymentMethodId().isBlank()) {
                 throw new RuntimeException("El ID del método de pago es obligatorio");
             }
 
-            // Buscar método de pago en BD
             PaymentMethod paymentMethod = paymentMethodRepository
                     .findByTokenId(request.paymentMethodId())
                     .orElseThrow(() -> new RuntimeException(
                             "Método de pago no encontrado: " + request.paymentMethodId()
                     ));
 
-            // Validaciones
             validatePaymentMethod(paymentMethod, request.userId());
 
-            //USAR MAPPER para crear transacción inicial
             transaction = mapper.createWalletRechargeTransaction(
                     request.userId(),
                     paymentMethod.getId(),
@@ -133,7 +129,6 @@ public class PaymentServiceImpl implements PaymentService {
             transaction = transactionRepository.save(transaction);
             System.out.println("Transacción registrada con ID: " + transaction.getId());
 
-            // Crear PaymentIntent en Stripe
             PaymentIntent intent = createStripePaymentIntent(
                     paymentMethod,
                     request.amount(),
@@ -141,15 +136,12 @@ public class PaymentServiceImpl implements PaymentService {
                     "Recarga de wallet - Usuario: " + request.userId()
             );
 
-            // Actualizar transacción con resultado de Stripe
             updateTransactionWithStripeResult(transaction, intent);
 
-            // Notificar al UserService si fue exitoso
             if ("COMPLETED".equals(transaction.getStatus())) {
                 notifyWalletRecharge(request.userId(), request.amount());
             }
 
-            // USAR MAPPER para retornar DTO
             return mapper.toTransactionResponseDTO(transaction);
 
         } catch (StripeException e) {
@@ -247,7 +239,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
                 .setAmount(amountInCents)
-                .setCurrency("usd")
+                .setCurrency("cop")
                 .setCustomer(paymentMethod.getStripeCustomerId())
                 .setPaymentMethod(paymentMethod.getTokenId())
                 .setConfirm(true)
@@ -272,7 +264,7 @@ public class PaymentServiceImpl implements PaymentService {
             }
             case "requires_action", "processing" -> {
                 transaction.setStatus("PROCESSING");
-                System.out.println("⏳ Pago en proceso");
+                System.out.println("Pago en proceso");
             }
             default -> {
                 transaction.setStatus("FAILED");
