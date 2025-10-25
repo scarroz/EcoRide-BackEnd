@@ -12,4 +12,7 @@ public interface UserAccountService {
     void deleteUser(Long id);
     UserProfileDTO createOrUpdateProfile(Long userId, UserProfileRequestDTO request);
     UserProfileDTO getUserProfile(Long userId);
+    String requestPasswordRecovery(Long id);
+    String resetPassword(String email, String code, String newPassword);
+
 }

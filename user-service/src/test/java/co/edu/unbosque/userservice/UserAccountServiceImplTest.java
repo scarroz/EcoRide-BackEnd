@@ -1,6 +1,5 @@
 package co.edu.unbosque.userservice;
 
-
 import co.edu.unbosque.userservice.dto.*;
 import co.edu.unbosque.userservice.exception.ResourceNotFoundException;
 import co.edu.unbosque.userservice.mapper.DataMapper;
@@ -12,17 +11,19 @@ import co.edu.unbosque.userservice.repository.UserProfileRepository;
 import co.edu.unbosque.userservice.repository.WalletRepository;
 import co.edu.unbosque.userservice.service.impl.UserAccountServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@DisplayName("UserAccountServiceImpl - Unit Tests")
 public class UserAccountServiceImplTest {
 
     @Mock private UserAccountRepository userRepo;
@@ -30,6 +31,7 @@ public class UserAccountServiceImplTest {
     @Mock private UserProfileRepository profileRepo;
     @Mock private PasswordEncoder encoder;
     @Mock private DataMapper mapper;
+    @Mock private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private UserAccountServiceImpl userService;
@@ -40,10 +42,11 @@ public class UserAccountServiceImplTest {
     }
 
     @Test
-    void registerUser_ShouldCreateUserAndWallet() {
+    @DisplayName("Debería crear usuario y wallet exitosamente")
+    void deberiaCrearUsuarioYWalletExitosamente() {
         UserAccountRequestDTO request = new UserAccountRequestDTO("Juan Pérez", "123456789", "juan@example.com", "pass123");
 
-        // mocks
+
         when(userRepo.findByEmail("juan@example.com")).thenReturn(Optional.empty());
         when(userRepo.findByDocumentNumber("123456789")).thenReturn(Optional.empty());
         when(encoder.encode("pass123")).thenReturn("encodedPass");
@@ -65,25 +68,29 @@ public class UserAccountServiceImplTest {
         );
         when(mapper.toUserAccountResponseDTO(savedUser, walletEntity)).thenReturn(responseDTO);
 
-        // ejecución
+        doNothing().when(eventPublisher).publishEvent(any(UserAccount.class));
+
         UserAccountResponseDTO response = userService.registerUser(request);
 
-        // verificaciones
         assertNotNull(response);
         assertEquals("Juan Pérez", response.fullName());
         assertEquals(BigDecimal.ZERO, response.walletBalance());
         verify(userRepo, times(1)).save(any(UserAccount.class));
         verify(walletRepo, times(1)).save(walletEntity);
+        verify(eventPublisher, times(1)).publishEvent(savedUser); // ← VERIFICAR QUE SE PUBLICÓ EL EVENTO
     }
+
     @Test
-    void registerUser_ShouldThrowIfEmailExists() {
+    @DisplayName("Debería lanzar excepción si el email ya existe")
+    void deberiaLanzarExcepcionSiEmailYaExiste() {
         when(userRepo.findByEmail("test@example.com")).thenReturn(Optional.of(new UserAccount()));
         UserAccountRequestDTO request = new UserAccountRequestDTO("Test", "999", "test@example.com", "1234");
         assertThrows(IllegalArgumentException.class, () -> userService.registerUser(request));
     }
 
     @Test
-    void getUserById_ShouldReturnUser() {
+    @DisplayName("Debería retornar usuario por ID exitosamente")
+    void deberiaRetornarUsuarioPorIdExitosamente() {
         UserAccount user = new UserAccount();
         user.setId(1L);
         Wallet wallet = new Wallet();
@@ -100,13 +107,15 @@ public class UserAccountServiceImplTest {
     }
 
     @Test
-    void getUserById_ShouldThrowIfNotFound() {
+    @DisplayName("Debería lanzar excepción si usuario no encontrado")
+    void deberiaLanzarExcepcionSiUsuarioNoEncontrado() {
         when(userRepo.findById(10L)).thenReturn(Optional.empty());
         assertThrows(ResourceNotFoundException.class, () -> userService.getUserById(10L));
     }
 
     @Test
-    void createOrUpdateProfile_ShouldCreateNewProfile() {
+    @DisplayName("Debería crear nuevo perfil de usuario exitosamente")
+    void deberiaCrearNuevoPerfilDeUsuarioExitosamente() {
         UserAccount user = new UserAccount();
         user.setId(1L);
         UserProfile profile = new UserProfile();
@@ -117,7 +126,7 @@ public class UserAccountServiceImplTest {
         when(profileRepo.save(profile)).thenReturn(profile);
         when(mapper.toUserProfileDTO(profile)).thenReturn(new UserProfileDTO(1L, "+57 300 1234567", "Calle 123", "Bogotá", "Colombia"));
 
-        UserProfileDTO dto = userService.createOrUpdateProfile(1L, new UserProfileRequestDTO(99L,"+57 300 1234567", "Calle 123", "Bogotá", "Colombia"));
+        UserProfileDTO dto = userService.createOrUpdateProfile(1L, new UserProfileRequestDTO(99L, "+57 300 1234567", "Calle 123", "Bogotá", "Colombia"));
 
         assertNotNull(dto);
         assertEquals("Bogotá", dto.city());

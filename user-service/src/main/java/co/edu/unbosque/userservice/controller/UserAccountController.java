@@ -463,4 +463,74 @@ public class UserAccountController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
         }
     }
+
+
+
+    @Operation(
+            summary = "Obtener email del usuario por ID",
+            description = "Devuelve el email asociado al ID del usuario. Usado por el servicio de notificaciones."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Email obtenido exitosamente"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Usuario no encontrado"
+            )
+    })
+    @GetMapping("/{id}/email")
+    public ResponseEntity<?> getUserEmailById(@PathVariable Long id) {
+        try {
+            var user = userService.getUserById(id);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "Usuario no encontrado", "message", "No existe el usuario con ID " + id));
+            }
+    System.out.println("Estamos aca");
+            // DTO que espera notification-service
+            var emailDto = new UserEmailDTO(user.id().intValue(), user.fullName(), user.email());
+            return ResponseEntity.ok(emailDto);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error al obtener email", "message", e.getMessage()));
+        }
+
+
+
+    }
+
+
+    @Operation(summary = "Restablecer contraseña con código")
+    @PostMapping("/password-recovery/reset")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordDTO dto) {
+        try {
+            String message = userService.resetPassword(dto.email(), dto.code(), dto.newPassword());
+            return ResponseEntity.ok(Map.of("message", message));
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Error", "message", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/password-recovery")
+    public ResponseEntity<?> requestPasswordRecovery(@PathVariable("id") Long id) {
+        try {
+            System.out.println("Solicitud de código de recuperación recibida para userId: " + id);
+            String result = userService.requestPasswordRecovery(id);
+            return ResponseEntity.ok(Map.of("message", result));
+        } catch (RuntimeException e) {
+            System.out.println("Error al solicitar código de recuperación: " + e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
 }
+
+
+
+
+
